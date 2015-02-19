@@ -100,6 +100,9 @@ func copyStruct(v reflect.Value) reflect.Value {
 	if v.Kind() == reflect.Ptr {
 		v = v.Elem()
 	}
+	if !v.IsValid() {
+		return reflect.Value{}
+	}
 
 	result := reflect.New(v.Type()).Elem()
 
@@ -132,7 +135,9 @@ func copyStruct(v reflect.Value) reflect.Value {
 			r := copyStruct(vfield)
 
 			if result.Field(i).Kind() == reflect.Ptr {
-				result.Field(i).Set(r.Addr())
+				if r.CanAddr() {
+					result.Field(i).Set(r.Addr())
+				}
 			} else {
 				result.Field(i).Set(r)
 			}
@@ -169,7 +174,7 @@ func iterateSlice(v reflect.Value) reflect.Value {
 			vi = copyStruct(value)
 		}
 
-		if value.Kind() == reflect.Ptr {
+		if value.Kind() == reflect.Ptr && reflect.SliceOf(vi.Type()) != v.Type() {
 			result = reflect.Append(result, vi.Addr())
 		} else {
 			result = reflect.Append(result, vi)
