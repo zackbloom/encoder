@@ -150,6 +150,11 @@ func copyStruct(v reflect.Value) reflect.Value {
 			continue
 		}
 
+		if vfield.Kind() == reflect.Map {
+			result.Field(i).Set(iterateMap(vfield))
+			continue
+		}
+
 		if result.Field(i).CanSet() {
 			result.Field(i).Set(vfield)
 		}
@@ -178,6 +183,38 @@ func iterateSlice(v reflect.Value) reflect.Value {
 			result = reflect.Append(result, vi.Addr())
 		} else {
 			result = reflect.Append(result, vi)
+		}
+	}
+
+	return result
+}
+
+func iterateMap(v reflect.Value) reflect.Value {
+	result := reflect.MakeMap(v.Type())
+
+	keys := v.MapKeys()
+	for _, key := range keys {
+		value := v.MapIndex(key)
+
+		if value.Kind() == reflect.Slice || value.Kind() == reflect.Array {
+			result.SetMapIndex(key, iterateSlice(value))
+			continue
+		}
+
+		if value.Kind() == reflect.Map {
+			result.SetMapIndex(key, iterateMap(value))
+			continue
+		}
+
+		vi := value
+		if value.Kind() == reflect.Struct {
+			vi = copyStruct(value)
+		}
+
+		if value.Kind() == reflect.Ptr && reflect.SliceOf(vi.Type()) != v.Type() {
+			result.SetMapIndex(key, vi.Addr())
+		} else {
+			result.SetMapIndex(key, vi)
 		}
 	}
 
