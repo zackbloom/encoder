@@ -108,6 +108,11 @@ func copyStruct(v reflect.Value) reflect.Value {
 
 	t := v.Type()
 
+	if t.Kind() != reflect.Struct {
+		result.Set(v)
+		return result
+	}
+
 	for i := 0; i < v.NumField(); i++ {
 		vfield := v.Field(i)
 
