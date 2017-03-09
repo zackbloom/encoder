@@ -120,6 +120,10 @@ func copyStruct(v reflect.Value) reflect.Value {
 			continue
 		}
 
+		if !vfield.CanInterface() {
+			continue
+		}
+
 		if vfield.Type() == reflect.TypeOf(time.Time{}) {
 			result.Field(i).Set(vfield)
 			continue
@@ -186,7 +190,7 @@ func iterateSlice(v reflect.Value) reflect.Value {
 
 		if value.Kind() == reflect.Ptr && reflect.SliceOf(vi.Type()) != v.Type() {
 			result = reflect.Append(result, vi.Addr())
-		} else {
+		} else if vi.CanInterface() {
 			result = reflect.Append(result, vi)
 		}
 	}
